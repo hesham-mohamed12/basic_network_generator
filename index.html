@@ -1,0 +1,1593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Hotel Network Generator</title>
+  <style>
+    :root {
+      box-sizing: border-box;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      --bg: #f6f7f9;
+      --fg: #1b1f24;
+      --card: #fff;
+      --bd: #d5d9df;
+      --ac: #1a6ef0;
+      --mut: #667;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #12151a;
+        --fg: #e6e9ee;
+        --card: #1b2028;
+        --bd: #343b47;
+        --ac: #5b9bff;
+        --mut: #9aa4b2;
+      }
+    }
+
+    :root[data-theme="dark"] {
+      --bg: #12151a;
+      --fg: #e6e9ee;
+      --card: #1b2028;
+      --bd: #343b47;
+      --ac: #5b9bff;
+      --mut: #9aa4b2;
+    }
+
+    html {
+      scroll-padding-top: env(safe-area-inset-top, 0px);
+    }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--fg);
+      font: 14px/1.5 system-ui, sans-serif;
+      padding: 12px;
+    }
+
+    h1 {
+      font-size: 18px;
+      margin: 0 0 10px;
+    }
+
+    .g {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 12px;
+    }
+
+    .c {
+      background: var(--card);
+      border: 1px solid var(--bd);
+      border-radius: 10px;
+      padding: 10px;
+      min-width: 0;
+    }
+
+    textarea {
+      width: 100%;
+      height: 200px;
+      background: var(--bg);
+      color: var(--fg);
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      font: 12px/1.4 ui-monospace, monospace;
+      box-sizing: border-box;
+    }
+
+    button, select {
+      background: var(--card);
+      color: var(--fg);
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      padding: 6px 10px;
+      margin: 2px;
+      font: inherit;
+      cursor: pointer;
+    }
+
+    button.on, button.p {
+      background: var(--ac);
+      color: #fff;
+      border-color: var(--ac);
+    }
+
+    .s {
+      overflow-x: auto;
+    }
+
+    .s table {
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    td, th {
+      border: 1px solid var(--bd);
+      padding: 3px 7px;
+      text-anchor: left;
+      white-space: nowrap;
+    }
+
+    pre {
+      background: var(--bg);
+      border: 1px solid var(--bd);
+      border-radius: 6px;
+      padding: 8px;
+      overflow: auto;
+      max-height: 480px;
+      font-size: 12px;
+      margin: 6px 0;
+    }
+
+    .err {
+      color: #d33;
+      white-space: pre-wrap;
+    }
+
+    svg text {
+      fill: var(--fg);
+      font: 11px system-ui, sans-serif;
+    }
+
+    svg .n {
+      fill: var(--card);
+      stroke: var(--ac);
+      stroke-width: 1.5;
+    }
+
+    svg .l {
+      stroke: var(--mut);
+      stroke-width: 1.5;
+      fill: none;
+    }
+
+    svg .m {
+      fill: var(--mut);
+    }
+
+    .t {
+      display: none;
+    }
+
+    .t.on {
+      display: block;
+    }
+
+    svg .clk { cursor: pointer; }
+    svg .clk:hover .n { stroke-width: 3; }
+
+    .term {
+      display: none;
+      position: fixed;
+      right: 12px;
+      bottom: 12px;
+      width: min(760px, calc(100vw - 24px));
+      height: 400px;
+      z-index: 50;
+      flex-direction: column;
+      background: #0b0e13;
+      color: #c8f7c5;
+      border: 1px solid #343b47;
+      border-radius: 10px;
+      box-shadow: 0 8px 30px rgba(0, 0, 0, .45);
+      overflow: hidden;
+    }
+
+    .term.on { display: flex; }
+
+    .term .th {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 4px 10px;
+      background: #1b2028;
+      color: #e6e9ee;
+    }
+
+    .term .th button { background: transparent; color: #e6e9ee; border: 0; font-size: 16px; }
+
+    .term #tout {
+      flex: 1;
+      margin: 0;
+      padding: 8px 10px;
+      border: 0;
+      border-radius: 0;
+      max-height: none;
+      background: transparent;
+      color: inherit;
+      font: 12.5px/1.45 ui-monospace, monospace;
+      white-space: pre-wrap;
+      overflow-y: auto;
+    }
+
+    .term .ti {
+      display: flex;
+      gap: 6px;
+      padding: 6px 10px;
+      border-top: 1px solid #343b47;
+      font: 12.5px ui-monospace, monospace;
+    }
+
+    .term .ti input {
+      flex: 1;
+      background: transparent;
+      border: 0;
+      outline: 0;
+      color: #fff;
+      font: inherit;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>basic Network Generator v1</h1>
+
+  <div class="g">
+    <!-- Column 1: Inputs & Controls -->
+    <div class="c">
+      <b>1) Describe the network (text)</b>
+      <div style="margin:4px 0"><select id="ex" title="Examples"></select></div>
+      <textarea id="tx" spellcheck="false"></textarea>
+      
+      <div style="margin-top: 8px;">
+        <button class="p" id="cv">Generate Network Topology</button>
+        <span id="cs" class="m" style="color:var(--mut)"></span>
+      </div>
+    </div>
+
+    <!-- Column 2: Outputs & Tabs -->
+    <div class="c">
+      <div>
+        <button data-t="topo" class="on">Topology</button>
+        <button data-t="ip">IP Plan</button>
+        <button data-t="cli">CLI Configs</button>
+        <button data-t="rt">Routing tables</button>
+      </div>
+
+      <div id="topo" class="t on s"></div>
+      <div id="ip" class="t s"></div>
+      <div id="cli" class="t">
+        <select id="dev"></select>
+        <button id="cp">Copy</button>
+        <pre id="out"></pre>
+      </div>
+      <div id="rt" class="t">
+        <pre id="rtp"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Device CLI (opens when a PC or router is clicked in the topology) -->
+  <div id="term" class="term">
+    <div class="th"><b id="tt"></b><button id="tclose" title="Close">✕</button></div>
+    <pre id="tout"></pre>
+    <div class="ti"><span id="tp"></span><input id="tin" spellcheck="false" autocomplete="off" autocapitalize="off"></div>
+  </div>
+
+  <script>
+    const $ = s => document.querySelector(s);
+    const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+    const safeName = s => s.replace(/\W/g, '_');
+
+    const mask = n => [0, 1, 2, 3]
+      .map(i => 256 - Math.pow(2, 8 - Math.max(0, Math.min(8, n - 8 * i))))
+      .join('.');
+
+    // =====================================================================
+    //  Data: departments, roles, VLANs, governorates (= city routers), types
+    // =====================================================================
+    const E = (n, x, f) => [n, new RegExp(x, f || 'ig')];
+
+    const DEP = [
+      E('Reception', 'reception'),
+      E('Management', 'management|managers?'),
+      E('Housekeeping', 'housekeeping'),
+      E('Restaurant', 'restaurants?'),
+      E('IT', '\\bIT\\b|[Ii]nformation [Tt]echnology', 'g'),
+      E('Servers', 'servers?|data ?cent(?:er|re)'),
+      E('Guest', 'guests?'),
+      E('Wi-Fi', 'wi-?fi'),
+      E('WAN', '\\bwan\\b'),
+      E('Students', 'students?'),
+      E('Doctors', 'doctors?'),
+      E('Admin', 'admin(?:istration)?'),
+      E('Labs', '\\blabs?\\b|laborator(?:y|ies)'),
+      E('Nurses', 'nurses?'),
+      E('Medical Devices', 'medical devices?'),
+      E('Employees', 'employees?'),
+      E('Sales', 'sales'),
+      E('Finance', 'finance|accounting'),
+      E('HR', '\\bHR\\b|human resources'),
+      E('Staff', '\\bstaff\\b'),
+      E('Security', 'security'),
+      E('Passengers', 'passengers?'),
+      E('Production', 'production'),
+      E('IoT', '\\biot\\b|sensors?'),
+      E('Visitors', 'visitors?'),
+      E('Media', '\\bmedia\\b'),
+      E('VIP', '\\bvip\\b')
+    ];
+
+    // Governorates are routers (branch sites), never switches.
+    const GOV = [
+      E('Cairo', 'cairo'),
+      E('Giza', 'giza'),
+      E('Alexandria', 'alexandria|\\balex\\b'),
+      E('Qalyubia', 'qalyubia|qalubia|kalyubia'),
+      E('Dakahlia', 'dakahlia|dakahliya'),
+      E('Sharqia', 'sharqia|sharkia'),
+      E('Gharbia', 'gharbia'),
+      E('Monufia', 'monufia|menofia'),
+      E('Beheira', 'beheira|behera'),
+      E('Kafr El Sheikh', 'kafr[\\s-]*el[\\s-]*sheikh'),
+      E('Damietta', 'damietta'),
+      E('Port Said', 'port[\\s-]*said'),
+      E('Ismailia', 'ismailia'),
+      E('Suez', 'suez'),
+      E('North Sinai', 'north[\\s-]*sinai'),
+      E('South Sinai', 'south[\\s-]*sinai'),
+      E('Red Sea', 'red[\\s-]*sea'),
+      E('New Valley', 'new[\\s-]*valley'),
+      E('Matrouh', 'matrouh|matruh'),
+      E('Fayoum', 'fayoum|faiyum'),
+      E('Beni Suef', 'beni[\\s-]*suef'),
+      E('Minya', 'minya'),
+      E('Assiut', 'assiut|asyut'),
+      E('Sohag', 'sohag'),
+      E('Qena', 'qena'),
+      E('Luxor', 'luxor'),
+      E('Aswan', 'aswan')
+    ];
+
+    const ALL = [...DEP, ...GOV];
+    const GOVN = GOV.map(g => g[0]);
+    const isGov = n => GOVN.includes(n);
+
+    // role: manager = only the first PC reaches everything | full = reaches everything, nobody starts a
+    //       connection to it | guest = isolated Wi-Fi (access point) | normal = only itself (+ its site servers)
+    const ROLE = { Management: 'manager', Admin: 'manager', IT: 'full', Guest: 'guest', Passengers: 'guest', 'Wi-Fi': 'guest', WAN: 'guest' };
+
+    const DV = {
+      Reception: 10, Management: 11, Housekeeping: 12, Restaurant: 13, IT: 14, Servers: 15,
+      Students: 16, Doctors: 17, Admin: 18, Labs: 19, Nurses: 20, 'Medical Devices': 21,
+      Employees: 22, Sales: 23, Finance: 24, HR: 25, Staff: 26, Security: 27, Production: 28, IoT: 29,
+      Visitors: 30, Media: 31, VIP: 32,
+      Guest: 99, Passengers: 98, 'Wi-Fi': 97, WAN: 96
+    };
+
+    const WIFI = ['Guest', 'Wi-Fi', 'WAN'];                       // one wireless section at most
+    const DEFAULT_SITE_DEPTS = ['Management', 'Sales', 'IT', 'HR'];
+    const SEVERAL = 4, DEFAULT_CITIES = 3;
+
+    const TYPES = [
+      ['hotel', /hotel|resort/i, ['Reception', 'Management', 'Housekeeping', 'Restaurant', 'IT'], 1],
+      ['hospital', /hospital|clinic/i, ['Doctors', 'Nurses', 'Labs', 'Medical Devices', 'Admin', 'IT'], 1],
+      ['school', /school|universit|college/i, ['Students', 'Staff', 'Admin', 'Labs', 'IT'], 1],
+      ['company', /company|office/i, ['Management', 'Sales', 'Finance', 'HR', 'IT', 'Servers'], 1],
+      ['airport', /airport/i, ['Passengers', 'Security', 'Staff', 'IT', 'Servers'], 0],
+      ['factory', /factory|plant/i, ['Production', 'IoT', 'Management', 'IT', 'Employees'], 0],
+      ['cities', /cities|city|governorates?|egypt|branches/i, [], 0]
+    ];
+
+    // =====================================================================
+    //  Text -> config
+    // =====================================================================
+    function parse(t) {
+      const hits = [];
+      for (const [n, re] of ALL) {
+        for (const x of t.matchAll(re)) hits.push([x.index, n]);
+      }
+      hits.sort((a, b) => a[0] - b[0]);
+
+      const found = [...new Set(hits.map(h => h[1]))];
+      let cities = found.filter(isGov);
+      let deps = found.filter(n => !isGov(n));
+
+      const ty = TYPES.find(x => x[1].test(t));
+      const cm = t.match(/(\d+|several|many|multiple)\s+(?:cities|city|governorates?|branches|sites)\b/i);
+      const multi = cities.length > 0 || !!cm || (!!ty && ty[0] === 'cities');
+
+      if (multi) {
+        if (!cities.length) {
+          const n = cm ? (/^\d+$/.test(cm[1]) ? +cm[1] : SEVERAL) : DEFAULT_CITIES;
+          cities = GOVN.slice(0, Math.max(1, Math.min(n, GOVN.length)));
+        }
+        if (!deps.length) deps = DEFAULT_SITE_DEPTS.slice();
+      } else if (!deps.length) {
+        if (!ty) throw Error('No known department/site name found in the description text.');
+        deps = [...ty[2], ...(ty[3] ? ['Guest'] : [])];
+      }
+
+      // Guest / Wi-Fi / WAN all mean "an access point section": keep only one of them
+      const wf = deps.filter(n => WIFI.includes(n));
+      if (wf.length > 1) {
+        const keep = wf.includes('Guest') ? 'Guest' : wf[0];
+        deps = deps.filter(n => !WIFI.includes(n) || n === keep);
+      }
+
+      // number of servers: "2 servers", "a web server and a mail server" ...
+      let srv = 1;
+      if (deps.includes('Servers')) {
+        let s = 0;
+        for (const x of t.matchAll(/(?:(\d+)\s+(?:\w+\s+)?)?\bservers?\b/gi)) s += x[1] ? +x[1] : 1;
+        srv = Math.max(1, Math.min(6, s));
+      }
+
+      const k = Math.max(1, Math.min(20, +(t.match(/(\d+)\s*(?:pcs?|computers?|devices?)/i)?.[1] || 4)));
+      const rc = multi ? 0 : +(t.match(/(\d+)\s*routers?/i)?.[1] || 0);
+
+      const c = {
+        mode: multi ? 'multi' : 'single',
+        switch: {}, router: {}, dept: {}, pc: {}, etherchannel: {},
+        server: {}, nat: { base: '203.0.113' }, policy: { hq: multi ? cities[0] : null }, acl: []
+      };
+
+      let swn = 0, pcn = 0, srn = 0;
+      (multi ? cities : [null]).forEach((city, s) => {
+        const sfx = city ? '@' + city : '';
+        const list = [];
+        deps.forEach(b => {
+          if (b === 'Servers') {
+            for (let i = 0; i < srv; i++) list.push({ base: b, key: (srv > 1 ? 'Server' + (i + 1) : 'Servers') + sfx, kind: 'server', vlan: 150 + i });
+          } else {
+            list.push({ base: b, key: b + sfx, kind: ROLE[b] === 'guest' ? 'ap' : 'lan', vlan: DV[b] || 100 });
+          }
+        });
+
+        list.forEach(x => {
+          c.dept[x.key] = { base: x.base, kind: x.kind, vlan: x.vlan, site: s, siteName: city };
+          if (x.kind === 'lan') c.switch['SW' + (++swn)] = x.key;
+          if (x.kind === 'server') c.pc['SRV' + (++srn)] = x.key;
+          else for (let q = 0; q < k; q++) c.pc['PC' + (++pcn)] = x.key;
+        });
+
+        // servers never get a router of their own: they are added to the last router
+        const rest = list.filter(x => x.kind !== 'server'), srvs = list.filter(x => x.kind === 'server');
+        if (multi) {
+          c.router['R-' + city.replace(/\s+/g, '-')] = [...rest, ...srvs].map(x => x.key);
+        } else {
+          const per = rc ? Math.ceil(rest.length / rc) : 2;
+          rest.forEach((x, i) => {
+            const r = 'R' + (Math.floor(i / per) + 1);
+            (c.router[r] = c.router[r] || []).push(x.key);
+          });
+          const last = Object.keys(c.router).pop() || (c.router.R1 = [], 'R1');
+          srvs.forEach(x => c.router[last].push(x.key));
+        }
+      });
+
+      let po = 0;
+      Object.values(c.router).forEach(ds => {
+        const lan = ds.filter(d => c.dept[d].kind === 'lan');
+        for (let i = 0; i + 1 < lan.length; i += 2) c.etherchannel['Po' + (++po)] = [lan[i], lan[i + 1], 'active', 'active', 4];
+      });
+
+      c.server.dhcp = Object.keys(c.router);
+      return c;
+    }
+
+    // =====================================================================
+    //  Config -> model (subnets, routers, HSRP, links, DHCP, ACLs, PCs)
+    // =====================================================================
+    const GB = { 99: 100, 98: 130, 97: 160, 96: 190 };           // guest third octet per VLAN (multi-site)
+
+    function build(c) {
+      const m = { c, mode: c.mode, depts: {}, routers: {}, pcs: [], sbOf: {} };
+      const R = Object.keys(c.router);
+      const swOf = {};
+      Object.entries(c.switch).forEach(([s, d]) => swOf[d] = s);
+
+      let apn = 0, mgr = 0;
+      for (const [key, info] of Object.entries(c.dept)) {
+        const role = ROLE[info.base] || 'normal';
+        const guest = role === 'guest';
+        const s = info.site;
+        const net = guest
+          ? (c.mode === 'multi' ? '172.16.' + ((GB[info.vlan] || 100) + s) + '.' : '172.16.' + info.vlan + '.')
+          : (c.mode === 'multi' ? '10.' + (10 + s) + '.' + info.vlan + '.' : '10.10.' + info.vlan + '.');
+        const D = {
+          name: key, base: info.base, kind: info.kind, sw: swOf[key] || null, vlan: info.vlan, net, guest, role,
+          site: s, siteName: info.siteName, acl: [], pcs: [], ex: role === 'manager' ? 11 : 10,
+          ap: info.kind === 'ap' ? 'AP' + (++apn) : null, gw: net + '1'
+        };
+        if (role === 'manager' && info.kind === 'lan') {
+          D.mip = net + '11';
+          D.mmac = '0000.0000.' + (++mgr).toString(16).padStart(4, '0');
+        }
+        m.depts[key] = D;
+      }
+
+      R.forEach((r, i) => m.routers[r] = { name: r, i, depts: c.router[r], n: 0, links: [], sbd: [], hidden: false, up: true });
+
+      for (const r of R) {
+        const o = m.routers[r];
+        for (const d of o.depts) {
+          const D = m.depts[d];
+          if (!D) throw Error('Unknown dept ' + d);
+          D.router = r;
+          D.if = 'Gi0/' + o.n++;
+        }
+      }
+
+      // ---- HSRP: every router gets its own standby router next to it ----
+      // Active and standby are NOT linked to each other or to any other router: both connect only to
+      // the cloud and to the same switches.
+      let grp = 0;
+      m.links = [];
+      R.forEach(r => {
+        const sb = r + '-SB';
+        m.routers[sb] = { name: sb, i: Object.keys(m.routers).length, depts: [], n: 0, links: [], sbd: [], hidden: true, up: true, partner: r };
+        m.sbOf[r] = sb;
+        m.routers[r].depts.filter(d => m.depts[d].kind === 'lan').forEach(d => {
+          const D = m.depts[d];
+          D.sb = sb;
+          D.hsrp = true;
+          D.grp = (grp++ % 255) + 1;
+          D.rip = D.net + '2';
+          D.sip = D.net + '3';
+          D.sif = 'Gi0/' + m.routers[sb].n++;
+          m.routers[sb].sbd.push({ d, if: D.sif, ip: D.sip });
+        });
+      });
+
+      const RN = Object.keys(m.routers);
+      m.stat = true;                                  // routing between routers is static, through the cloud
+      m.hqRouter = c.mode === 'multi' ? R[0] : null;
+      m.hq = c.policy.hq;
+
+      // ---- DHCP: every active router serves its own departments; standby routers do not ----
+      const dhl = ((c.server && c.server.dhcp) || []).filter(r => m.routers[r] && !m.routers[r].hidden);
+      if (!dhl.length) dhl.push(R[0]);
+      m.dhl = dhl;
+      m.dh = {};
+      RN.forEach(r => m.dh[r] = []);
+      R.forEach(r => {
+        const o = m.routers[r];
+        if (dhl.includes(r)) return m.dh[r].push(...o.depts);
+        const fd = m.depts[m.routers[dhl[0]].depts[0]];
+        o.helper = fd.rip || fd.gw;
+        m.dh[dhl[0]].push(...o.depts);
+      });
+
+      const base = (c.nat && c.nat.base) || '203.0.113';
+      RN.forEach((r, i) => {
+        const o = m.routers[r];
+        o.cloud = { if: 'Gi0/' + o.n++, ip: base + '.' + (4 * i + 2), isp: base + '.' + (4 * i + 1), len: 30 };
+      });
+
+      // ---- devices (PCs, wireless clients, servers) ----
+      for (const [p, d] of Object.entries(c.pc)) {
+        const D = m.depts[d];
+        const k = D.pcs.length + 1;
+        const srv = D.kind === 'server';
+        const x = {
+          name: p, d, kind: srv ? 'server' : 'pc',
+          ip: srv ? D.net + '10' : D.net + (10 + k),
+          gw: D.gw,
+          port: srv ? 'Eth0' : D.kind === 'ap' ? 'Wi-Fi (AP)' : 'Fa0/' + k,
+          static: !!D.mmac && k === 1
+        };
+        D.pcs.push(x);
+        m.pcs.push(x);
+      }
+
+      for (const [f, t, a] of c.acl) {
+        const src = m.depts[f].net + '0 0.0.0.255';
+        const targets = (t === 'internal' ? ['10.0.0.0 0.255.255.255'] : [m.depts[t].net + '0 0.0.0.255']);
+        targets.forEach(x => m.depts[f].acl.push(a + ' ip ' + src + ' ' + x));
+      }
+
+      Object.entries(c.etherchannel).forEach(([k, [a, b, ma, mb, ln]], i) => {
+        const L = Math.min(8, Math.max(2, +ln || 4));
+        m.depts[a].ch = { po: i + 1, mode: 'active', peer: b, prio: 4096, links: L };
+        m.depts[b].ch = { po: i + 1, mode: 'active', peer: a, prio: 8192, links: L };
+      });
+
+      // ---- ACL policy ----
+      const all = Object.values(m.depts);
+      const gD = all.filter(D => D.guest);
+      const rD = all.filter(D => !D.guest);
+      const nt = D => D.net + '0 0.0.0.255';
+      const fullD = rD.filter(D => D.role === 'full');
+      const mgrIps = rD.filter(D => D.mip).map(D => D.mip);
+
+      gD.forEach(D => {
+        const s = nt(D);
+        D.acl.push('deny ip ' + s + ' 10.0.0.0 0.255.255.255');
+        gD.filter(e => e !== D).forEach(e => D.acl.push('deny ip ' + s + ' ' + nt(e)));
+      });
+
+      rD.forEach(D => {
+        const L = D.acl, s = nt(D);
+
+        if (D.mip) {
+          gD.forEach(g => L.push('deny ip host ' + D.mip + ' ' + nt(g)));
+          L.push('permit ip host ' + D.mip + ' any');
+        }
+
+        if (D.role === 'full') {
+          gD.forEach(g => L.push('deny ip ' + s + ' ' + nt(g)));
+          return;
+        }
+
+        const siteDepts = rD.filter(e => e !== D && e.site === D.site && e.kind !== 'server');
+        const replyTo = [
+          ...fullD.filter(e => e !== D).map(nt),
+          ...mgrIps.filter(ip => ip !== D.mip).map(ip => 'host ' + ip),
+          ...(D.kind === 'server' ? siteDepts.map(nt) : [])
+        ];
+        [...new Set(replyTo)].forEach(t => L.push('permit icmp ' + s + ' ' + t + ' echo-reply', 'permit tcp ' + s + ' ' + t + ' established'));
+
+        if (D.kind !== 'server') {
+          rD.filter(e => e.kind === 'server' && e.site === D.site).forEach(e => L.push('permit ip ' + s + ' ' + nt(e)));
+        }
+
+        [...rD, ...gD].filter(e => e !== D).forEach(e => L.push('deny ip ' + s + ' ' + nt(e)));
+      });
+
+      all.forEach(D => {
+        if (D.acl.length && D.acl[D.acl.length - 1] !== 'permit ip any any') D.acl.push('permit ip any any');
+      });
+
+      initSim(m);
+      return m;
+    }
+
+    // =====================================================================
+    //  CLI generators
+    // =====================================================================
+    const extDhcp = m => m.pcs.find(p => p.kind === 'server' && p.roles.has('dhcp') && p.cfg.ip) || null;
+
+    function swCli(m, d) {
+      const D = m.depts[d];
+      const ch = D.ch;
+      const pair = (ch ? [D, m.depts[ch.peer]] : [D]).sort((a, b) => a.vlan - b.vlan);
+      const vl = pair.map(x => x.vlan);
+      const L = ['hostname ' + D.sw, '!'];
+
+      pair.forEach(x => L.push('vlan ' + x.vlan, ' name ' + safeName(x.name)));
+      L.push(
+        '!',
+        'spanning-tree mode rapid-pvst',
+        'spanning-tree vlan ' + vl.join(',') + ' priority ' + (ch ? ch.prio : 8192),
+        '!',
+        'ip dhcp snooping',
+        'ip dhcp snooping vlan ' + vl.join(','),
+        'no ip dhcp snooping information option',
+        '!',
+        'interface range fa0/1 - ' + Math.max(D.pcs.length, 2),
+        ' description PCs',
+        ' switchport mode access',
+        ' switchport access vlan ' + D.vlan,
+        ' spanning-tree portfast',
+        ' spanning-tree bpduguard enable',
+        ' ip dhcp snooping limit rate 15',
+        ' switchport port-security',
+        ' switchport port-security maximum 2',
+        ' switchport port-security violation restrict',
+        '!',
+        'interface fa0/23',
+        ' description Uplink to ' + D.router + ' ' + D.if + ' (HSRP active)',
+        ' switchport mode access',
+        ' switchport access vlan ' + D.vlan,
+        ' ip dhcp snooping trust',
+        '!'
+      );
+
+      if (D.sb) {
+        L.push(
+          'interface fa0/24',
+          ' description Uplink to ' + D.sb + ' ' + D.sif + ' (HSRP standby)',
+          ' switchport mode access',
+          ' switchport access vlan ' + D.vlan,
+          ' ip dhcp snooping trust',
+          '!'
+        );
+      }
+
+      if (ch) {
+        L.push(
+          'interface range fa0/' + (23 - ch.links) + ' - 22',
+          ' description EtherChannel to ' + m.depts[ch.peer].sw,
+          ' switchport mode trunk',
+          ' switchport trunk allowed vlan ' + vl.join(','),
+          ' channel-group ' + ch.po + ' mode ' + ch.mode,
+          '!',
+          'interface port-channel ' + ch.po,
+          ' switchport mode trunk',
+          ' switchport trunk allowed vlan ' + vl.join(','),
+          ' ip dhcp snooping trust',
+          '!'
+        );
+      }
+
+      L.push('end', 'write memory');
+      return L.join('\n');
+    }
+
+    function apCli(m, d) {
+      const D = m.depts[d];
+      return [
+        'hostname ' + D.ap,
+        '!',
+        'dot11 ssid ' + safeName(D.base) + '_WiFi',
+        ' vlan ' + D.vlan,
+        ' authentication open',
+        ' guest-mode',
+        '!',
+        'interface Dot11Radio0',
+        ' encryption vlan ' + D.vlan + ' mode ciphers aes-ccm',
+        ' ssid ' + safeName(D.base) + '_WiFi',
+        ' no shutdown',
+        '!',
+        'interface GigabitEthernet0',
+        ' description Uplink to ' + D.router + ' ' + D.if,
+        ' no shutdown',
+        '!',
+        'interface BVI1',
+        ' ip address ' + (D.apIp || D.net + '2') + ' 255.255.255.0',
+        '!',
+        'ip default-gateway ' + D.gw,
+        'end',
+        'write memory'
+      ].join('\n');
+    }
+
+    function srvCli(m, p) {
+      const D = m.depts[p.d];
+      const roles = [...p.roles];
+      return [
+        'hostname ' + p.name,
+        '!',
+        'interface eth0',
+        ' description Uplink to ' + D.router + ' ' + D.if,
+        ' mac-address ' + p.mac,
+        p.cfg.ip ? ' ip address ' + p.cfg.ip + ' ' + p.cfg.mask : ' ! ip address not set yet (planned: ' + p.ip + ' 255.255.255.0)',
+        p.cfg.gw ? ' default-gateway ' + p.cfg.gw : ' ! default gateway not set yet (planned: ' + p.gw + ')',
+        '!',
+        'server roles: ' + (roles.join(', ') || '(none - use "server role web|file|dhcp|mail")')
+      ].join('\n');
+    }
+
+    function rCli(m, r) {
+      const o = m.routers[r];
+      const ext = extDhcp(m);
+      const local = m.dhl.includes(r) && !ext;
+      const hp = ext ? ext.cfg.ip : (m.dhl.includes(r) ? null : o.helper);
+      const L = ['hostname ' + r, '!'];
+
+      if (local) {
+        m.dh[r].forEach(d => {
+          const D = m.depts[d];
+          if (D.kind === 'server') return;
+          L.push(
+            'ip dhcp excluded-address ' + D.net + '1 ' + D.net + D.ex,
+            'ip dhcp pool ' + safeName(d),
+            ' network ' + D.net + '0 255.255.255.0',
+            ' default-router ' + D.gw,
+            ' dns-server 8.8.8.8'
+          );
+          if (D.mip) {
+            L.push(
+              'ip dhcp pool ' + safeName(d) + '_MANAGER_PC',
+              ' host ' + D.mip + ' 255.255.255.0',
+              ' hardware-address ' + D.mmac + ' ethernet',
+              ' default-router ' + D.gw,
+              ' dns-server 8.8.8.8'
+            );
+          }
+        });
+        L.push('!');
+      }
+
+      const helper = D => (hp && D.kind !== 'server' && !(ext && ext.d === D.name)) ? [' ip helper-address ' + hp] : [];
+
+      o.depts.forEach(d => {
+        const D = m.depts[d];
+        const what = D.kind === 'server' ? 'Server ' + D.pcs[0].name : D.kind === 'ap' ? D.ap : D.sw;
+        L.push('interface ' + D.if, ' description ' + what + ' ' + d, ' ip address ' + (D.hsrp ? D.rip : D.gw) + ' 255.255.255.0');
+        if (D.acl.length) L.push(' ip access-group ACL_' + safeName(d) + ' in');
+        L.push(...helper(D));
+        L.push(' ip nat inside');
+        if (D.hsrp) L.push(' standby ' + D.grp + ' ip ' + D.gw, ' standby ' + D.grp + ' priority 110', ' standby ' + D.grp + ' preempt');
+        L.push(' no shutdown', '!');
+      });
+
+      o.sbd.forEach(x => {
+        const D = m.depts[x.d];
+        L.push('interface ' + x.if, ' description ' + D.sw + ' ' + x.d + ' (HSRP standby)', ' ip address ' + x.ip + ' 255.255.255.0');
+        if (D.acl.length) L.push(' ip access-group ACL_' + safeName(x.d) + ' in');
+        L.push(...helper(D));
+        L.push(' ip nat inside', ' standby ' + D.grp + ' ip ' + D.gw, ' standby ' + D.grp + ' priority 100', ' standby ' + D.grp + ' preempt', ' no shutdown', '!');
+      });
+
+      o.links.forEach(l => {
+        L.push('interface ' + l.if, ' description Link to ' + l.peer, ' ip address ' + l.ip + ' 255.255.255.252', ' ip nat inside', ' no shutdown', '!');
+      });
+
+      const k = o.cloud;
+      const mine = new Set([...o.depts, ...o.sbd.map(x => x.d)]);
+      L.push(
+        'interface ' + k.if,
+        ' description To ISP / Cloud',
+        ' ip address ' + k.ip + ' ' + mask(k.len),
+        ' ip nat outside',
+        ' no shutdown',
+        '!',
+        'ip access-list extended NAT_LIST',
+        ' deny ip 10.0.0.0 0.255.255.255 10.0.0.0 0.255.255.255',
+        ' permit ip 10.0.0.0 0.255.255.255 any',
+        ' permit ip 172.16.0.0 0.15.255.255 any',
+        '!',
+        'ip nat inside source list NAT_LIST interface ' + k.if + ' overload',
+        'ip route 0.0.0.0 0.0.0.0 ' + k.isp
+      );
+      // the other routers are reached through the cloud (WAN transit), there are no router-to-router links
+      Object.values(m.depts).filter(D => !mine.has(D.name)).forEach(D => L.push('ip route ' + D.net + '0 255.255.255.0 ' + k.isp));
+      L.push('!');
+
+      [...mine].forEach(d => {
+        const D = m.depts[d];
+        if (D.acl.length) {
+          L.push('ip access-list extended ACL_' + safeName(d));
+          D.acl.forEach(a => L.push(' ' + a));
+          L.push('!');
+        }
+      });
+
+      L.push('end', 'write memory');
+      return L.join('\n');
+    }
+
+    function rt(m, r) {
+      const o = m.routers[r];
+      const L = ['## ' + r + '#show ip route', 'C=connected  S=static', ''];
+
+      o.depts.forEach(d => L.push('C   ' + m.depts[d].net + '0/24 is directly connected, ' + m.depts[d].if));
+      o.sbd.forEach(x => L.push('C   ' + m.depts[x.d].net + '0/24 is directly connected, ' + x.if));
+      L.push('C   ' + o.cloud.ip + '/' + o.cloud.len + ' is directly connected, ' + o.cloud.if);
+
+      const mine = new Set([...o.depts, ...o.sbd.map(x => x.d)]);
+      Object.values(m.depts).filter(D => !mine.has(D.name)).forEach(D => L.push('S   ' + D.net + '0/24 [1/0] via ' + o.cloud.isp + ' (cloud)'));
+
+      L.push('S*  0.0.0.0/0 [1/0] via ' + o.cloud.isp);
+      return L.join('\n');
+    }
+
+    // =====================================================================
+    //  Topology drawing
+    // =====================================================================
+    function draw(m) {
+      const RL = Object.values(m.routers);
+      const act = RL.filter(o => !o.hidden);
+      RL.forEach(o => { o.bw = Math.max(96, 7 * o.name.length + 16); });
+
+      let ci = 0;
+      act.forEach(o => {
+        o.depts.forEach(d => { m.depts[d].x = 110 + ci * 200; m.depts[d].ci = ci++; });
+        if (o.depts.length < 2) ci++;                                  // keep room for the router + standby pair
+      });
+      const W = ci * 200 + 20;
+
+      act.forEach(o => {
+        const sb = m.routers[m.sbOf[o.name]];
+        const c0 = o.depts.reduce((a, d) => a + m.depts[d].x, 0) / o.depts.length;
+        const tw = o.bw + 14 + sb.bw;
+        o.x = c0 - tw / 2 + o.bw / 2;
+        sb.x = c0 + tw / 2 - sb.bw / 2;
+      });
+
+      const col = i => `hsl(${i * 57},65%,50%)`;
+      const ln = [], nd = [];
+      const bx = (x, y, w, h, t, s, st, dat) => nd.push(
+        (dat ? `<g class="clk" ${dat}><title>Click to open CLI</title>` : '') +
+        `<rect class="n" x="${x - w / 2}" y="${y - h / 2}" width="${w}" height="${h}" rx="6" ${st || ''}/>` +
+        `<text x="${x}" y="${y - (s ? 2 : -4)}" text-anchor="middle" font-weight="600">${esc(t)}</text>` +
+        `${s ? `<text class="m" x="${x}" y="${y + 11}" text-anchor="middle">${esc(s)}</text>` : ''}` +
+        (dat ? '</g>' : '')
+      );
+
+      const cx = W / 2;
+      RL.forEach(o => ln.push(`<path class="l" d="M${cx},62 L${o.x},133"/>`));
+      nd.push(`<ellipse class="n" cx="${cx}" cy="38" rx="95" ry="24"/><text x="${cx}" y="42" text-anchor="middle" font-weight="600">ISP / Cloud (WAN + NAT on each router)</text>`);
+
+      RL.forEach(o => {
+        const sub = o.hidden ? 'Standby (HSRP)' : m.mode === 'multi' ? (o.name === m.hqRouter ? 'HQ router' : 'Branch router') : 'Router';
+        bx(o.x, 150, o.bw, 34, o.name, sub, o.hidden ? 'style="stroke-dasharray:4"' : '', `data-r="${o.name}"`);
+      });
+
+      act.forEach(o => o.depts.forEach(d => {
+        const D = m.depts[d];
+        ln.push(`<path class="l" d="M${o.x},167 L${D.x},248"/>`);
+        if (D.hsrp) {
+          const sb = m.routers[D.sb];
+          ln.push(`<path class="l" stroke-dasharray="4" style="opacity:.6" d="M${sb.x},167 L${D.x + 14},248"/>`);
+        }
+
+        const st = `style="stroke:${col(D.ci)}"`;
+        if (D.kind === 'server') {
+          const dev = D.pcs[0];
+          bx(D.x, 265, 92, 36, dev.name, [...dev.roles].join(' / ') || 'Server', st, `data-pc="${dev.name}"`);
+          nd.push(`<text class="m" x="${D.x}" y="296" text-anchor="middle">${D.net}0/24 (direct)</text>`);
+        } else if (D.kind === 'ap') {
+          nd.push(`<circle class="n" cx="${D.x}" cy="265" r="18" ${st}/><text x="${D.x}" y="269" text-anchor="middle" font-weight="600">${D.ap}</text>`);
+          nd.push(`<text class="m" x="${D.x}" y="296" text-anchor="middle">${esc(/wi-?fi|wan/i.test(D.base) ? D.base : D.base + ' Wi-Fi')} · VLAN ${D.vlan}</text>`);
+          nd.push(`<text class="m" x="${D.x}" y="308" text-anchor="middle">${D.net}0/24</text>`);
+        } else {
+          bx(D.x, 265, 92, 36, D.sw, D.base, st);
+          nd.push(`<text class="m" x="${D.x}" y="296" text-anchor="middle">VLAN ${D.vlan} · ${D.net}0/24</text>`);
+        }
+
+        if (D.kind === 'server') return;
+        const n = D.pcs.length, y = 380;
+        D.pcs.forEach((p, k) => {
+          const sp = Math.min(42, 170 / Math.max(n, 1));
+          const x = D.x - (n - 1) * sp / 2 + k * sp;
+          const y0 = D.kind === 'ap' ? 316 : 283;
+          ln.push(`<path class="l" ${D.kind === 'ap' ? 'stroke-dasharray="4"' : ''} d="M${D.x},${y0} L${x},${y - 12}"/>`);
+          nd.push(`<g class="clk" data-pc="${p.name}"><title>${p.name} - click to open CLI</title><rect class="n" x="${x - 16}" y="${y - 12}" width="32" height="22" rx="3" style="stroke:${col(D.ci)}"/><text x="${x}" y="${y + 3}" text-anchor="middle" font-size="10">${p.name}</text></g>`);
+        });
+      }));
+
+      Object.values(m.depts).filter(d => d.ch && d.ch.prio === 4096).forEach(a => {
+        const b = m.depts[a.ch.peer];
+        for (let q = 0; q < a.ch.links; q++) {
+          const y = 265 - (a.ch.links - 1) * 2 + q * 4;
+          ln.push(`<path class="l" d="M${a.x + 46},${y} L${b.x - 46},${y}"/>`);
+        }
+        nd.push(`<text class="m" x="${(a.x + b.x) / 2}" y="248" text-anchor="middle" font-size="9">Po${a.ch.po} ×${a.ch.links} active</text>`);
+      });
+
+      return `<svg viewBox="0 0 ${W} 460" width="100%" style="min-width:${W > 1300 ? W : Math.min(W, 900)}px">${ln.join('')}${nd.join('')}</svg>`;
+    }
+
+    // =====================================================================
+    //  IP plan tables
+    // =====================================================================
+    const tb = (h, rows) => `<table><tr>${h.map(x => '<th>' + x + '</th>').join('')}</tr>${rows.map(r => '<tr>' + r.map(x => '<td>' + x + '</td>').join('') + '</tr>').join('')}</table>`;
+    const sect = (t, body) => body ? `<h3 style="margin:14px 0 4px;font-size:13px">${t}</h3>${body}` : '';
+
+    function ipPlan(m) {
+      const D = Object.values(m.depts);
+      const lan = D.filter(x => x.kind === 'lan'), srv = D.filter(x => x.kind === 'server'), aps = D.filter(x => x.kind === 'ap');
+      const head = '<p>' + (m.mode === 'multi'
+        ? 'Multi-site: ' + Object.values(m.routers).filter(o => !o.hidden).length + ' city routers · HQ: <b>' + m.hq + '</b>'
+        : 'Single site') +
+        ' · Routers: ' + Object.values(m.routers).length + ' (' + Object.values(m.routers).filter(o => !o.hidden).length + ' active + ' + Object.values(m.routers).filter(o => o.hidden).length + ' standby, each connected to the cloud only) · Routing: static through the cloud' +
+        ' · HSRP: on (every router has its own standby router)</p>';
+
+      const pool = x => x.kind === 'server' ? 'static' : x.net + (x.ex + 1) + ' - ' + x.net + '254';
+      const dev = x => x.kind === 'server' ? x.pcs[0].name : x.kind === 'ap' ? x.ap : x.sw;
+      const where = x => x.router + ' ' + x.if + (x.hsrp ? ' / ' + x.sb + ' ' + x.sif : '');
+
+      return head +
+        (m.mode === 'multi' ? sect('Sites', tb(['City', 'Router', 'Standby', 'Departments'], Object.values(m.routers).filter(o => !o.hidden).map(o => [o.depts.length ? m.depts[o.depts[0]].siteName : '', o.name, m.sbOf[o.name] || '-', o.depts.map(d => m.depts[d].base).join(', ')]))) : '') +
+        sect('Departments (switches)', tb(['Dept', 'Switch', 'Router (active / standby)', 'VLAN', 'Network', 'Gateway', 'DHCP pool'], lan.map(x => [x.name, dev(x), where(x), x.vlan, x.net + '0/24', x.gw + (x.hsrp ? ' (HSRP virtual)' : ''), pool(x)]))) +
+        sect('HSRP', tb(['Dept', 'Group', 'Virtual IP', 'Active router', 'Standby router'], lan.map(x => [x.name, x.grp, x.gw, x.router + ' ' + x.rip + ' (priority 110, preempt)', x.sb + ' ' + x.sip + ' (priority 100)']))) +
+        sect('Servers (connected directly to a router)', tb(['Server', 'Dept', 'Router port', 'MAC', 'Planned IP (static)', 'Mask', 'Gateway'], srv.map(x => [x.pcs[0].name, x.name, x.router + ' ' + x.if, x.pcs[0].mac, x.pcs[0].ip, '255.255.255.0', x.gw]))) +
+        sect('Access points (Wi-Fi / WAN)', tb(['AP', 'Section', 'SSID', 'Router port', 'VLAN', 'Network', 'Gateway', 'DHCP pool', 'Wireless clients'], aps.map(x => [x.ap, x.name, safeName(x.base) + '_WiFi', x.router + ' ' + x.if, x.vlan, x.net + '0/24', x.gw, pool(x), x.pcs.length]))) +
+        sect('PCs', tb(['PC', 'Dept', 'Port', 'MAC', 'Planned IP', 'Mask', 'Gateway'], m.pcs.filter(p => p.kind === 'pc').map(p => [p.name, p.d, p.port, p.mac, p.ip + (p.static ? ' (DHCP reservation)' : ' (DHCP)'), '255.255.255.0', p.gw]))) +
+        sect('Cloud / NAT', tb(['NAT router', 'Outside if', 'Outside IP', 'ISP gateway'], Object.values(m.routers).map(o => [o.name, o.cloud.if, o.cloud.ip + '/30', o.cloud.isp])));
+    }
+
+    // =====================================================================
+    //  Device simulation: IP / MAC / DHCP / ARP / ping / services / HSRP
+    // =====================================================================
+    let M = null, CUR = null, BUSY = false;
+
+    const sleep = ms => new Promise(r => setTimeout(r, ms));
+    const i2n = s => s.split('.').reduce((a, b) => a * 256 + +b, 0);
+    const isIp = s => /^\d{1,3}(\.\d{1,3}){3}$/.test(s) && s.split('.').every(x => +x <= 255);
+    const isMask = s => {
+      if (!isIp(s)) return false;
+      const inv = (~i2n(s)) >>> 0;
+      return inv >= 3 && ((inv & (inv + 1)) === 0);
+    };
+    const sameNet = (a, b, mk) => ((i2n(a) & i2n(mk)) >>> 0) === ((i2n(b) & i2n(mk)) >>> 0);
+    const hex2 = b => b.toString(16).padStart(2, '0');
+    const fmtMac = b => [0, 2, 4].map(i => hex2(b[i]) + hex2(b[i + 1])).join('.');
+
+    // random MAC that was never handed out before
+    function newMac(m) {
+      let mac;
+      do {
+        const b = [0x00, 0x0c, ...[0, 1, 2, 3].map(() => Math.floor(Math.random() * 256))];
+        mac = fmtMac(b);
+      } while (m.macs.has(mac));
+      m.macs.add(mac);
+      return mac;
+    }
+
+    function initSim(m) {
+      m.macs = new Set(Object.values(m.depts).filter(D => D.mmac).map(D => D.mmac.toLowerCase()));
+      m.ifIp = {};                                                  // every router / AP address -> owner
+      m.dhcpSrv = {};
+      Object.entries(m.dh).forEach(([r, ds]) => ds.forEach(d => m.dhcpSrv[d] = r));
+
+      Object.values(m.routers).forEach(o => {
+        o.mac = {}; o.arp = {}; o.bind = {}; o.dhcpOn = true; o.up = true; o.log = [];
+        o.depts.forEach(d => {
+          const D = m.depts[d];
+          o.mac[D.if] = newMac(m);
+          m.ifIp[D.gw] = o.name;
+          if (D.rip) m.ifIp[D.rip] = o.name;
+        });
+        o.sbd.forEach(x => { o.mac[x.if] = newMac(m); m.ifIp[x.ip] = o.name; });
+        o.links.forEach(l => { o.mac[l.if] = newMac(m); m.ifIp[l.ip] = o.name; });
+        o.mac[o.cloud.if] = newMac(m);
+        m.ifIp[o.cloud.ip] = o.name;
+      });
+
+      Object.values(m.depts).forEach(D => {
+        D.gwMac = D.hsrp ? '0000.0c07.ac' + hex2(D.grp) : m.routers[D.router].mac[D.if];   // HSRP virtual MAC
+        if (D.ap) { D.apIp = D.net + '2'; m.ifIp[D.apIp] = D.ap; }
+      });
+
+      m.pcs.forEach(p => {
+        p.mac = p.static ? m.depts[p.d].mmac.toLowerCase() : newMac(m);
+        p.cfg = { ip: null, mask: null, gw: null, mode: null };
+        p.arp = {};
+        p.log = [];
+        if (p.kind === 'server') { p.roles = new Set(); p.bind = {}; }
+      });
+    }
+
+    // which router currently answers for a department's gateway (HSRP)
+    const actR = (m, D) => {
+      const a = m.routers[D.router];
+      if (a.up) return a.name;
+      if (D.sb && m.routers[D.sb].up) return D.sb;
+      return null;
+    };
+    const ifOf = (D, r) => r === D.router ? D.if : D.sif;
+
+    // who already uses this IP? (PCs, servers, router interfaces, APs)
+    const ipOwner = (m, ip, except) => {
+      for (const p of m.pcs) if (p !== except && p.cfg.ip === ip) return p.name;
+      return m.ifIp[ip] || null;
+    };
+
+    function releaseIp(m, p) {
+      [...Object.values(m.routers), ...m.pcs.filter(x => x.bind)].forEach(h => Object.keys(h.bind).forEach(ip => { if (h.bind[ip] === p.mac) delete h.bind[ip]; }));
+      p.cfg = { ip: null, mask: null, gw: null, mode: null };
+      p.arp = {};
+    }
+
+    // DHCP: from a DHCP *server* (role dhcp) when one is active, otherwise from the router pool
+    function dhcpLease(m, p) {
+      const D = m.depts[p.d];
+      const gwr = actR(m, D);
+      if (!gwr) return { err: 'DHCP does not work (no gateway router is up)' };
+
+      let holder, label;
+      const ext = extDhcp(m);
+      if (ext) {
+        const sr = m.routers[m.depts[ext.d].router];
+        if (!sr.up || !routePath(m, gwr, sr.name)) return { err: `DHCP does not work (DHCP server ${ext.name} ${ext.cfg.ip} is unreachable)` };
+        holder = ext; label = ext.name + ' (DHCP server)';
+      } else {
+        const sv = m.routers[m.dhcpSrv[p.d]];
+        if (!sv || !sv.dhcpOn || !sv.up) return { err: 'DHCP does not work' };
+        holder = sv; label = sv.name;
+      }
+
+      let ip = null;
+      if (D.mmac && p.mac === D.mmac.toLowerCase() && !ipOwner(m, D.mip, p)) ip = D.mip;
+      for (let i = D.ex + 1; !ip && i <= 254; i++) {
+        const c = D.net + i;
+        if (!ipOwner(m, c, p)) ip = c;
+      }
+      if (!ip) return { err: 'DHCP does not work (address pool is full)' };
+      holder.bind[ip] = p.mac;
+      return { ip, mask: '255.255.255.0', gw: D.gw, server: label };
+    }
+
+    // ---------- ACL evaluation (same text the router config uses) ----------
+    const aclSpec = (t, i) => t[i] === 'any' ? [{ any: true }, i + 1]
+      : t[i] === 'host' ? [{ ip: t[i + 1], wc: '0.0.0.0' }, i + 2]
+      : [{ ip: t[i], wc: t[i + 1] }, i + 2];
+    const aclHit = (s, ip) => s.any || ((i2n(ip) & ~i2n(s.wc)) >>> 0) === ((i2n(s.ip) & ~i2n(s.wc)) >>> 0);
+
+    // type: 'echo' | 'echo-reply' | 'tcp' | 'tcp-reply'
+    function aclEval(lines, src, dst, type) {
+      for (const ln of lines) {
+        const t = ln.split(/\s+/);
+        const [s, i] = aclSpec(t, 2);
+        const [d, j] = aclSpec(t, i);
+        const opt = t[j];
+        if (!aclHit(s, src) || !aclHit(d, dst)) continue;
+        let hit = t[1] === 'ip';
+        if (t[1] === 'icmp') hit = (type === 'echo' || type === 'echo-reply') && (!opt || opt === type);
+        if (t[1] === 'tcp') hit = (type === 'tcp' || type === 'tcp-reply') && (!opt || (opt === 'established' && type === 'tcp-reply'));
+        if (hit) return { permit: t[0] === 'permit', line: ln };
+      }
+      return { permit: false, line: 'implicit deny' };
+    }
+
+    // ---------- routing: static routes through the cloud; routers that are down are skipped ----------
+    function routePath(m, a, b) {
+      if (!m.routers[a].up || !m.routers[b].up) return null;
+      return a === b ? [a] : [a, 'ISP', b];                          // routers only meet through the cloud
+    }
+
+    // ---------- reachability: IP/MAC -> routing -> ACL -> ARP ----------
+    async function reach(m, src, tgt, proto, banner, say) {
+      const S = m.depts[src.d];
+      const [rq, rp] = proto === 'tcp' ? ['tcp', 'tcp-reply'] : ['echo', 'echo-reply'];
+
+      // condition 1: both devices need IP + MAC
+      if (!src.cfg.ip || !src.mac) { say(`Problem: ${src.name} has no IP address.\nUse "ip address dhcp" or "ip address <ip> <mask> <gateway>".`); return null; }
+      let dst = m.pcs.find(p => p.name.toLowerCase() === tgt.toLowerCase());
+      let dip;
+      if (dst) {
+        if (!dst.cfg.ip || !dst.mac) { say(`Problem: ${dst.name} has no IP address (the target device is not configured).`); return null; }
+        dip = dst.cfg.ip;
+      } else if (isIp(tgt)) {
+        dip = tgt;
+        dst = m.pcs.find(p => p.cfg.ip === dip) || null;
+      } else { say(`% Unknown host "${tgt}" (use a device name like PC2 or SRV1, or an IP address)`); return null; }
+
+      if (dip === src.cfg.ip) { say(`Reply from ${dip}: bytes=32 time<1ms TTL=128 (this device)`); return null; }
+      banner(dst, dip);
+
+      const gwHit = dip === S.gw;
+      const local = sameNet(dip, src.cfg.ip, src.cfg.mask);
+      let path = [], Dd = null, rs = null, rd = null;
+
+      if (local) {
+        if (gwHit) {
+          rs = actR(m, S);
+          if (!rs) { say(`Reply from ${src.cfg.ip}: Destination host unreachable (default gateway ${dip} is down).`); return null; }
+        } else if (!dst || dst.d !== src.d) {
+          say(`Reply from ${src.cfg.ip}: Destination host unreachable (no ARP reply for ${dip}).`);
+          return null;
+        }
+      } else {
+        // condition 2: routing
+        if (!src.cfg.gw) { say(`Problem in routing: ${src.name} has no default gateway, so it cannot reach ${dip}.`); return null; }
+        if (src.cfg.gw !== S.gw) { say(`Problem in routing: default gateway ${src.cfg.gw} of ${src.name} is unreachable (the gateway is ${S.gw}).`); return null; }
+        rs = actR(m, S);
+        if (!rs) { say(`Problem in routing: no router answers for the gateway ${S.gw} (${S.router}${S.sb ? ' and ' + S.sb : ''} are down).`); return null; }
+        Dd = Object.values(m.depts).find(D => sameNet(dip, D.net + '0', '255.255.255.0'));
+        if (!Dd) { say(`Problem in routing: ${rs} has no route to ${dip}.`); return null; }
+        rd = actR(m, Dd);
+        if (!rd) { say(`Problem in routing: the routers of ${Dd.name} are down, no route to ${Dd.net}0/24.`); return null; }
+        path = routePath(m, rs, rd);
+        if (!path) { say(`Problem in routing: no static route from ${rs} to ${Dd.net}0/24 (${Dd.name}).`); return null; }
+        if (dst && dst.cfg.gw !== Dd.gw) { say(`Problem in routing: ${dst.name} has no valid default gateway (${Dd.gw}), the reply cannot return.`); return null; }
+
+        // condition 3: ACL (only traffic that crosses a router is filtered)
+        const q = aclEval(S.acl, src.cfg.ip, dip, rq);
+        if (S.acl.length && !q.permit) {
+          say(`${src.name} cannot access ${dst ? dst.name : dip}: blocked by ACL_${safeName(S.name)} (in, ${rs} ${ifOf(S, rs)})\n  matched: ${q.line}`);
+          return null;
+        }
+        if (!dst || dst.d !== Dd.name) { say(`Reply from ${S.gw}: Destination host unreachable (${dip} does not answer ARP).`); return null; }
+        const r = aclEval(Dd.acl, dip, src.cfg.ip, rp);
+        if (Dd.acl.length && !r.permit) {
+          for (let n = 0; n < 4; n++) { await sleep(150); say('Request timed out.'); }
+          say(`${src.name} cannot access ${dst.name}: the reply is blocked by ACL_${safeName(Dd.name)} (in, ${rd} ${ifOf(Dd, rd)})\n  matched: ${r.line}`);
+          return null;
+        }
+      }
+
+      // ARP: learn the neighbours that really talked to each other
+      const fresh = (local && !gwHit) ? !src.arp[dip] : !src.arp[S.gw];
+      if (local && !gwHit) {
+        src.arp[dip] = dst.mac;
+        dst.arp[src.cfg.ip] = src.mac;
+      } else {
+        src.arp[S.gw] = S.gwMac;
+        m.routers[rs].arp[src.cfg.ip] = { mac: src.mac, ifc: ifOf(S, rs) };
+        if (!gwHit) {
+          m.routers[rd].arp[dip] = { mac: dst.mac, ifc: ifOf(Dd, rd) };
+          dst.arp[Dd.gw] = Dd.gwMac;
+        }
+      }
+
+      const hops = local ? 0 : path.length;
+      return { dst, dip, fresh, hops, ttl: gwHit ? 255 : 128 - hops };
+    }
+
+    const rtt = (x, first) => 6 + x.hops * 5 + Math.random() * 6 + (first && x.fresh ? 15 : 0);
+
+    // pingTime = endTime - startTime
+    async function doPing(m, src, tgt, say) {
+      const x = await reach(m, src, tgt, 'icmp', (dst, dip) => say(`Pinging ${dst ? dst.name + ' ' : ''}[${dip}] with 32 bytes of data:`), say);
+      if (!x) return;
+      const times = [];
+      for (let n = 0; n < 4; n++) {
+        const startTime = performance.now();
+        await sleep(rtt(x, n === 0));
+        const endTime = performance.now();
+        const pingTime = endTime - startTime;
+        times.push(pingTime);
+        say(`Reply from ${x.dip}: bytes=32 time=${Math.round(pingTime)}ms TTL=${x.ttl}`);
+      }
+      const mn = Math.min(...times), mx = Math.max(...times), av = times.reduce((a, b) => a + b, 0) / times.length;
+      say(`\nPing statistics for ${x.dip}: Sent = 4, Received = 4, Lost = 0 (0% loss)\nRound trip: min = ${Math.round(mn)}ms, max = ${Math.round(mx)}ms, avg = ${Math.round(av)}ms\nPing succeeded: ${src.name} -> ${x.dst ? x.dst.name : x.dip} is reachable.`);
+    }
+
+    const SERVICES = {
+      web: { key: 'web', label: 'web', port: 80, reply: d => 'HTTP/1.1 200 OK  (server: ' + d.name + ')' },
+      file: { key: 'file', label: 'file', port: 21, reply: d => '230 Login successful. File server ' + d.name + ' is ready.' },
+      mail: { key: 'mail', label: 'mail', port: 25, reply: d => '220 ' + d.name + ' ESMTP ready' }
+    };
+
+    // a TCP service on a server: same IP / routing / ACL conditions as ping, then the role must be enabled
+    async function doService(m, src, tgt, svc, say) {
+      const x = await reach(m, src, tgt, 'tcp', (dst, dip) => say(`Connecting to ${dst ? dst.name + ' ' : ''}[${dip}]:${svc.port} (${svc.label} service) ...`), say);
+      if (!x) return;
+      const startTime = performance.now();
+      await sleep(rtt(x, true) * 2);
+      const pingTime = performance.now() - startTime;
+      if (!x.dst || x.dst.kind !== 'server' || !x.dst.roles.has(svc.key)) {
+        return say(`Connection refused: ${x.dst ? x.dst.name : x.dip} is not running a ${svc.label} service (port ${svc.port} is closed).`);
+      }
+      say(`Connected to ${x.dst.name} ${x.dip}:${svc.port}\n${svc.reply(x.dst)}\nTime: ${Math.round(pingTime)}ms\n${svc.label} request succeeded.`);
+    }
+
+    // =====================================================================
+    //  Device CLI (PC / server / router)
+    // =====================================================================
+    const isRouter = d => !!d.depts;
+    const promptOf = d => isRouter(d) ? d.name + '#' : d.name + '>';
+    const say = d => l => { d.log.push(l); if (CUR === d) renderTerm(); };
+
+    function renderTerm() {
+      const o = $('#tout');
+      o.textContent = CUR.log.join('\n');
+      o.scrollTop = o.scrollHeight;
+    }
+
+    const refreshTopo = () => { if (M) $('#topo').innerHTML = draw(M); show(); };
+
+    function openTerm(d) {
+      CUR = d;
+      d.hist = d.hist || [];
+      d.hi = d.hist.length;
+      $('#tt').textContent = isRouter(d)
+        ? 'Router ' + d.name + ' CLI'
+        : d.name + (d.kind === 'server' ? ' (server)' : '') + ' CLI  (' + d.d + ' · ' + d.port + ' · MAC ' + d.mac + ')';
+      $('#tp').textContent = promptOf(d);
+      if (!d.log.length) say(d)('Type "help" to list commands.');
+      $('#term').classList.add('on');
+      renderTerm();
+      $('#tin').focus();
+    }
+
+    function closeTerm() {
+      CUR = null;
+      $('#term').classList.remove('on');
+    }
+
+    const HELP_PC = [
+      'Commands:',
+      '  ip address dhcp                      get IP/mask/gateway from DHCP',
+      '  ip address <ip> <mask> <gateway>     static address (gateway optional)',
+      '  no ip address                        remove the address',
+      '  ping <device name | ip>              e.g. ping PC5  or  ping SRV1',
+      '  curl <host>                          web request (needs a server with role web)',
+      '  ftp <host>                           file service (needs role file)',
+      '  mail <host>                          mail service (needs role mail)',
+      '  show ip                              IP, mask, gateway, MAC',
+      '  show arp                             ARP table',
+      '  clear arp | clear | help'
+    ].join('\n');
+
+    const HELP_SRV = HELP_PC.replace('  show ip ', [
+      '  server role <web|file|dhcp|mail>     enable a role (a server can have several)',
+      '  no server role <role>                disable a role',
+      '  show server                          roles and services',
+      '  show dhcp binding                    leases handed out (role dhcp)',
+      '  show ip '
+    ].join('\n') + '\n  show ip ');
+
+    const HELP_R = [
+      'Commands:',
+      '  show ip route | show arp | show interfaces | show ip dhcp binding',
+      '  show standby brief                   HSRP state of every interface',
+      '  show running-config',
+      '  service dhcp | no service dhcp       turn this router\'s DHCP server on/off',
+      '  shutdown | no shutdown               power the router off/on (HSRP standby takes over)',
+      '  clear | help'
+    ].join('\n');
+
+    const pad = (s, n) => String(s).padEnd(n);
+
+    async function execPc(m, p, line, out) {
+      const t = line.trim().split(/\s+/), c = t.join(' ').toLowerCase();
+      const srv = p.kind === 'server';
+
+      if (c === 'help' || c === '?') return out(srv ? HELP_SRV : HELP_PC);
+      if (c === 'clear' || c === 'cls') { p.log.length = 0; return renderTerm(); }
+
+      if (/^ip address dhcp$/.test(c)) {
+        if (srv) return out('% A server must use a static IP address (ip address <ip> <mask> <gateway>).');
+        releaseIp(m, p);
+        out('Sending DHCPDISCOVER ...');
+        await sleep(350);
+        const r = dhcpLease(m, p);
+        if (r.err) return out('% Error: ' + r.err);
+        p.cfg = { ip: r.ip, mask: r.mask, gw: r.gw, mode: 'dhcp' };
+        return out(`DHCP address assigned by ${r.server}: ${r.ip}  mask ${r.mask}  gateway ${r.gw}`);
+      }
+
+      if (t[0].toLowerCase() === 'ip' && (t[1] || '').toLowerCase() === 'address') {
+        const [, , ip, mk, gw] = t;
+        if (!ip || !mk) return out('% Usage: ip address <ip> <mask> <gateway>   or   ip address dhcp');
+        if (!isIp(ip)) return out('% Invalid IP address: ' + ip);
+        if (!isMask(mk)) return out('% Invalid subnet mask: ' + mk);
+        if (gw && !isIp(gw)) return out('% Invalid default gateway: ' + gw);
+        const n = i2n(ip), inv = (~i2n(mk)) >>> 0;
+        if (((n & inv) >>> 0) === 0 || ((n & inv) >>> 0) === inv) return out('% Invalid host address (network or broadcast address)');
+        const own = ipOwner(m, ip, p);
+        if (own) return out(`% duplicate ip address: ${ip} is already used by ${own}`);
+        releaseIp(m, p);
+        p.cfg = { ip, mask: mk, gw: gw || null, mode: 'static' };
+        if (srv) refreshTopo();
+        return out(`Static address set: ${ip}  mask ${mk}  gateway ${gw || '(none)'}`);
+      }
+
+      if (c === 'no ip address') {
+        if (!p.cfg.ip) return out('% No IP address is configured.');
+        releaseIp(m, p);
+        return out('IP address removed.');
+      }
+
+      if (c === 'show ip' || c === 'ipconfig' || c === 'show ip interface') {
+        return out([
+          `Device          : ${p.name}  (${p.d}, ${p.port})`,
+          `MAC Address     : ${p.mac}`,
+          `IP Address      : ${p.cfg.ip || '(not set)'}${p.cfg.mode ? '   [' + p.cfg.mode + ']' : ''}`,
+          `Subnet Mask     : ${p.cfg.mask || '(not set)'}`,
+          `Default Gateway : ${p.cfg.gw || '(not set)'}`
+        ].join('\n'));
+      }
+
+      if (c === 'show mac') return out(p.mac);
+
+      if (c === 'show arp' || c === 'arp -a') {
+        const e = Object.entries(p.arp);
+        if (!e.length) return out('ARP table is empty.');
+        return out(pad('Internet Address', 20) + pad('Physical Address', 18) + 'Type\n' +
+          e.map(([ip, mac]) => pad(ip, 20) + pad(mac, 18) + 'dynamic').join('\n'));
+      }
+
+      if (c === 'clear arp') { p.arp = {}; return out('ARP table cleared.'); }
+
+      // ----- server only -----
+      if (/^(no )?server role\b/.test(c) || c === 'show server' || c === 'show dhcp binding') {
+        if (!srv) return out('% This device is a PC. Only servers can have roles.');
+
+        if (c === 'show server') {
+          const on = [...p.roles];
+          return out([
+            `Server ${p.name}  (${p.cfg.ip || 'no IP address yet'})`,
+            `Roles: ${on.join(', ') || '(none)'}`,
+            ...Object.values(SERVICES).map(s => `  ${pad(s.label, 6)} port ${pad(s.port, 3)} ${p.roles.has(s.key) ? 'running' : 'stopped'}`),
+            `  ${pad('dhcp', 6)} port 67  ${p.roles.has('dhcp') ? (p.cfg.ip ? 'running (routers relay DHCP to this server)' : 'enabled, waiting for a static IP') : 'stopped'}`
+          ].join('\n'));
+        }
+
+        if (c === 'show dhcp binding') {
+          const e = Object.entries(p.bind);
+          if (!p.roles.has('dhcp')) return out('% The dhcp role is not enabled on this server.');
+          if (!e.length) return out('No bindings.');
+          return out(pad('IP address', 18) + 'Hardware address\n' + e.map(([ip, mac]) => pad(ip, 18) + mac).join('\n'));
+        }
+
+        const on = !/^no /.test(c);
+        const role = t[on ? 2 : 3] ? t[on ? 2 : 3].toLowerCase() : '';
+        if (!['web', 'file', 'dhcp', 'mail'].includes(role)) return out('% Usage: server role <web|file|dhcp|mail>   (or: no server role <role>)');
+        if (on) {
+          if (role === 'dhcp' && p.cfg.mode !== 'static') return out('% A DHCP server needs a static IP address first (ip address <ip> <mask> <gateway>).');
+          p.roles.add(role);
+          refreshTopo();
+          return out(role === 'dhcp'
+            ? `Role dhcp enabled. Every router now relays DHCP requests to ${p.cfg.ip} (ip helper-address) and its local pools are removed.`
+            : `Role ${role} enabled on ${p.name}.`);
+        }
+        p.roles.delete(role);
+        refreshTopo();
+        return out(`Role ${role} disabled on ${p.name}.` + (role === 'dhcp' ? ' The routers serve DHCP from their own pools again.' : ''));
+      }
+
+      const sv = { curl: 'web', http: 'web', ftp: 'file', mail: 'mail', smtp: 'mail' }[t[0].toLowerCase()];
+      if (sv) {
+        if (!t[1]) return out(`% Usage: ${t[0]} <server name | ip>`);
+        return doService(m, p, t[1], SERVICES[sv], out);
+      }
+
+      if (t[0].toLowerCase() === 'ping') {
+        if (!t[1]) return out('% Usage: ping <device name | ip>');
+        return doPing(m, p, t[1], out);
+      }
+
+      out(`% Unknown command: "${line}". Type "help".`);
+    }
+
+    function execRouter(m, o, line, out) {
+      const c = line.trim().toLowerCase().replace(/\s+/g, ' ');
+
+      if (c === 'help' || c === '?') return out(HELP_R);
+      if (c === 'clear' || c === 'cls') { o.log.length = 0; return renderTerm(); }
+      if (c === 'show ip route') return out(rt(m, o.name));
+      if (c === 'show running-config' || c === 'show run') return out(rCli(m, o.name));
+
+      if (c === 'service dhcp') { o.dhcpOn = true; return out('DHCP server enabled.'); }
+      if (c === 'no service dhcp') { o.dhcpOn = false; return out('DHCP server disabled (PCs asking this router for DHCP will get an error).'); }
+
+      if (c === 'shutdown') {
+        o.up = false;
+        const takers = Object.values(m.depts).filter(D => D.router === o.name && D.hsrp && m.routers[D.sb].up);
+        return out(`${o.name} is DOWN.` + (takers.length ? ` HSRP: ${[...new Set(takers.map(D => D.sb))].join(', ')} became Active for ${takers.map(D => D.name).join(', ')}.` : ' No standby router is available for its networks.'));
+      }
+      if (c === 'no shutdown') {
+        o.up = true;
+        return out(`${o.name} is UP. It preempts and becomes Active again for its HSRP groups.`);
+      }
+
+      if (c === 'show standby brief' || c === 'show standby') {
+        const rows = [];
+        const add = (D, ifc, pri, mine) => {
+          let state = 'Init', active = 'unknown', standby = 'unknown';
+          const peer = mine === 'active' ? D.sb : D.router, peerIp = mine === 'active' ? D.sip : D.rip, myIp = mine === 'active' ? D.rip : D.sip;
+          if (o.up) {
+            const a = actR(m, D);
+            state = a === o.name ? 'Active' : 'Standby';
+            active = a === o.name ? 'local' : (a ? (a === D.router ? D.rip : D.sip) : 'unknown');
+            standby = a === o.name ? (m.routers[peer].up ? peerIp : 'unknown') : 'local';
+          }
+          rows.push(pad(ifc, 11) + pad(D.grp, 5) + pad(pri, 5) + 'P ' + pad(state, 9) + pad(active, 17) + pad(standby, 17) + D.gw);
+        };
+        o.depts.forEach(d => { const D = m.depts[d]; if (D.hsrp) add(D, D.if, 110, 'active'); });
+        o.sbd.forEach(x => add(m.depts[x.d], x.if, 100, 'standby'));
+        if (!rows.length) return out('No HSRP groups on this router.');
+        return out(pad('Interface', 11) + pad('Grp', 5) + pad('Pri', 5) + pad('P State', 11) + pad('Active', 17) + pad('Standby', 17) + 'Virtual IP\n' + rows.join('\n'));
+      }
+
+      if (c === 'show interfaces') {
+        const L = [];
+        o.depts.forEach(d => { const D = m.depts[d]; L.push(`${pad(D.if, 8)} MAC ${o.mac[D.if]}   ${D.hsrp ? D.rip : D.gw}/24   ${d}`); });
+        o.sbd.forEach(x => L.push(`${pad(x.if, 8)} MAC ${o.mac[x.if]}   ${x.ip}/24   ${x.d} (standby)`));
+        o.links.forEach(l => L.push(`${pad(l.if, 8)} MAC ${o.mac[l.if]}   ${l.ip}/30   link to ${l.peer}`));
+        L.push(`${pad(o.cloud.if, 8)} MAC ${o.mac[o.cloud.if]}   ${o.cloud.ip}/${o.cloud.len}   ISP`);
+        return out(L.join('\n'));
+      }
+
+      if (c === 'show arp' || c === 'show ip arp') {
+        const rows = [];
+        o.depts.forEach(d => { const D = m.depts[d]; rows.push([D.hsrp ? D.rip : D.gw, '-', o.mac[D.if], D.if]); if (D.hsrp) rows.push([D.gw + ' (virtual)', '-', D.gwMac, D.if]); });
+        o.sbd.forEach(x => rows.push([x.ip, '-', o.mac[x.if], x.if]));
+        Object.entries(o.arp).forEach(([ip, e]) => rows.push([ip, 'dynamic', e.mac, e.ifc]));
+        return out(pad('Address', 22) + pad('Age', 10) + pad('Hardware Addr', 18) + 'Interface\n' +
+          rows.map(r => pad(r[0], 22) + pad(r[1], 10) + pad(r[2], 18) + r[3]).join('\n'));
+      }
+
+      if (c === 'show ip dhcp binding') {
+        const e = Object.entries(o.bind);
+        if (extDhcp(m)) return out('% DHCP is served by ' + extDhcp(m).name + ' (this router only relays).');
+        if (!e.length) return out(o.dhcpOn ? 'No bindings.' : 'DHCP server is disabled.');
+        return out(pad('IP address', 18) + 'Hardware address\n' + e.map(([ip, mac]) => pad(ip, 18) + mac).join('\n'));
+      }
+
+      out(`% Unknown command: "${line}". Type "help".`);
+    }
+
+    async function execLine(d, line) {
+      const out = say(d);
+      if (isRouter(d)) return execRouter(M, d, line, out);
+      return execPc(M, d, line, out);
+    }
+
+    $('#topo').addEventListener('click', e => {
+      const g = e.target.closest('[data-pc],[data-r]');
+      if (!g || !M) return;
+      const dev = g.dataset.pc ? M.pcs.find(p => p.name === g.dataset.pc) : M.routers[g.dataset.r];
+      if (dev) openTerm(dev);
+    });
+
+    $('#tclose').onclick = closeTerm;
+
+    $('#tin').onkeydown = async e => {
+      const inp = e.target, d = CUR;
+      if (!d) return;
+      if (e.key === 'ArrowUp' || e.key === 'ArrowDown') {
+        e.preventDefault();
+        d.hi = Math.max(0, Math.min(d.hist.length, d.hi + (e.key === 'ArrowUp' ? -1 : 1)));
+        inp.value = d.hist[d.hi] || '';
+      } else if (e.key === 'Enter') {
+        if (BUSY) return;
+        const line = inp.value.trim();
+        inp.value = '';
+        if (!line) return;
+        d.hist.push(line);
+        d.hi = d.hist.length;
+        say(d)(promptOf(d) + ' ' + line);
+        BUSY = true;
+        try { await execLine(d, line); } catch (err) { say(d)('% Error: ' + err.message); }
+        BUSY = false;
+        inp.focus();
+      }
+    };
+
+    // =====================================================================
+    //  Page glue
+    // =====================================================================
+    let CF = {};
+
+    function runWithData(c) {
+      try {
+        const m = build(c);
+        M = m;
+        closeTerm();
+
+        $('#topo').innerHTML = draw(m);
+        $('#ip').innerHTML = ipPlan(m);
+
+        CF = {};
+        Object.values(m.depts).filter(D => D.sw).forEach(D => CF['Switch ' + D.sw + ' (' + D.name + ')'] = () => swCli(m, D.name));
+        Object.keys(m.routers).forEach(r => CF['Router ' + r + (m.routers[r].hidden ? ' (standby)' : '')] = () => rCli(m, r));
+        m.pcs.filter(p => p.kind === 'server').forEach(p => CF['Server ' + p.name + ' (' + p.d + ')'] = () => srvCli(m, p));
+        Object.values(m.depts).filter(D => D.ap).forEach(D => CF['Access Point ' + D.ap + ' (' + D.name + ')'] = () => apCli(m, D.name));
+
+        $('#dev').innerHTML = Object.keys(CF).map(k => `<option>${esc(k)}</option>`).join('');
+        show();
+        $('#rtp').textContent = Object.keys(m.routers).map(r => rt(m, r)).join('\n\n');
+
+        const nr = Object.values(m.routers);
+        $('#cs').textContent = Object.keys(m.depts).length + ' networks · ' + nr.filter(o => !o.hidden).length + ' routers' + (nr.some(o => o.hidden) ? ' + ' + nr.filter(o => o.hidden).length + ' standby' : '') + ' · ' + m.pcs.length + ' devices';
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    }
+
+    const show = () => {
+      const f = CF[$('#dev').value];
+      $('#out').textContent = f ? f() : '';
+    };
+
+    $('#dev').onchange = show;
+
+    $('#cp').onclick = () => {
+      try {
+        navigator.clipboard.writeText($('#out').textContent);
+      } catch (e) {}
+    };
+
+    const EXAMPLES = {
+      'Hotel (default)': "A hotel wants to build a network connecting its Reception, Management, Housekeeping, Restaurant, and IT departments. Guests should have access to a separate Wi-Fi network without being able to access the hotel's internal resources. The network should provide reliable communication between departments and secure Internet access.",
+      'Company with servers': 'A company with Management, Sales, HR, IT, Visitors, Media and VIP departments. It has a web server, a mail server and a file server. Wi-Fi for visitors.',
+      'Several cities': 'A company with several cities.',
+      'Cities with departments': 'Branches in Cairo, Giza and Alexandria. Each branch has Sales, HR and IT, and Wi-Fi.',
+      'Hospital (2 routers)': 'A hospital with doctors, nurses, labs and admin and 2 routers.'
+    };
+    $('#ex').innerHTML = Object.keys(EXAMPLES).map(k => `<option>${esc(k)}</option>`).join('');
+    $('#ex').onchange = () => { $('#tx').value = EXAMPLES[$('#ex').value]; $('#cv').click(); };
+    $('#tx').value = EXAMPLES['Hotel (default)'];
+
+    $('#cv').onclick = () => {
+      try {
+        const configData = parse($('#tx').value);
+        runWithData(configData);
+      } catch (e) {
+        alert('Error: ' + e.message);
+      }
+    };
+
+    document.querySelectorAll('[data-t]').forEach(b => {
+      b.onclick = () => {
+        document.querySelectorAll('[data-t]').forEach(x => x.classList.toggle('on', x === b));
+        document.querySelectorAll('.t').forEach(x => x.classList.toggle('on', x.id === b.dataset.t));
+      };
+    });
+
+    $('#cv').click();
+  </script>
+</body>
+</html>
